@@ -1,4 +1,5 @@
 <?php
+namespace SuiteMapper\Storage;
 
 interface Storage
 {

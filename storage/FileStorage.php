@@ -1,4 +1,5 @@
 <?php
+namespace SuiteMapper\Storage;
 
 class FileStorage implements Storage
 {

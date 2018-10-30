@@ -1,4 +1,5 @@
 <?php
+namespace SuiteMapper\Mapping;
 
 class Mapping
 {

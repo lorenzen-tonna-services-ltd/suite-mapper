@@ -1,5 +1,10 @@
 {
     "name": "lorenzen-tonna-services-ltd/suite-mapper",
     "type": "project",
-    "description": ""
+    "description": "",
+    "autoload": {
+        "psr-4": {
+            "SuiteMapper\\": "suite-mapper/"
+        }
+    }
 }

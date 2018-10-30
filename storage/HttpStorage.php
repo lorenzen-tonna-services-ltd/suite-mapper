@@ -1,4 +1,5 @@
 <?php
+namespace SuiteMapper\Storage;
 
 class HttpStorage implements Storage
 {

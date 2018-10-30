@@ -81,4 +81,13 @@ class MappingField
             'destinationField' => $this->destinationField
         ];
     }
+
+    public function fromArray(array $data)
+    {
+        $this->converter = (new ConverterRegistry())->getConverterByKey($data['converter']);
+        $this->sourceField = $data['sourceField'];
+        $this->destinationField = $data['destinationField'];
+
+        return $this;
+    }
 }

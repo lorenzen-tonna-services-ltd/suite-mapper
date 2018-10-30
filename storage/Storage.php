@@ -2,6 +2,6 @@
 
 interface Storage
 {
-	public function writeJsonToFile($json);
+	public function writeJsonToFile($file, $json);
 	public function readJsonFromFile($file);
 }

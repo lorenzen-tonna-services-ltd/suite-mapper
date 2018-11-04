@@ -14,6 +14,16 @@ class Mapping
     private $destinationTable;
 
     /**
+     * @var string
+     */
+    private $sourceIdentifier;
+
+    /**
+     * @var string
+     */
+    private $destinationIdentifier;
+
+    /**
      * @var array
      */
     private $mappingFields = [];
@@ -75,6 +85,38 @@ class Mapping
     }
 
     /**
+     * @return string
+     */
+    public function getSourceIdentifier()
+    {
+        return $this->sourceIdentifier;
+    }
+
+    /**
+     * @param string $sourceIdentifier
+     */
+    public function setSourceIdentifier($sourceIdentifier)
+    {
+        $this->sourceIdentifier = $sourceIdentifier;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDestinationIdentifier()
+    {
+        return $this->destinationIdentifier;
+    }
+
+    /**
+     * @param string $destinationIdentifier
+     */
+    public function setDestinationIdentifier($destinationIdentifier)
+    {
+        $this->destinationIdentifier = $destinationIdentifier;
+    }
+
+    /**
      * @return array
      */
     public function toArray()
@@ -86,8 +128,14 @@ class Mapping
         }
 
         return [
-            'source' => $this->sourceTable,
-            'destination' => $this->destinationTable,
+            'source' => [
+                'field' => $this->sourceIdentifier,
+                'table' => $this->sourceTable
+            ],
+            'destination' => [
+                'field' => $this->destinationIdentifier,
+                'table' => $this->destinationTable
+            ],
             'fields' => $fields
         ];
     }
@@ -98,8 +146,10 @@ class Mapping
      */
     public function fromArray(array $data)
     {
-        $this->sourceTable = $data['source'];
-        $this->destinationTable = $data['destination'];
+        $this->sourceTable = $data['source']['table'];
+        $this->sourceIdentifier = $data['source']['identifier'];
+        $this->destinationTable = $data['destination']['table'];
+        $this->destinationIdentifier = $data['destination']['identifier'];
 
         foreach ($data['fields'] as $field) {
             $this->mappingFields[] = (new MappingField())->fromArray($field);

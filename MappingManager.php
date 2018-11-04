@@ -1,6 +1,9 @@
 <?php
 namespace SuiteMapper;
 
+use SuiteMapper\Mapping\Mapping;
+use SuiteMapper\Storage\Storage;
+
 /**
  * Class MappingManager
  */

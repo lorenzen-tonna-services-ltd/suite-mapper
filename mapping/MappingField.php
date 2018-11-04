@@ -1,6 +1,9 @@
 <?php
 namespace SuiteMapper\Mapping;
 
+use SuiteMapper\Converter\Converter;
+use SuiteMapper\Converter\ConverterRegistry;
+
 class MappingField
 {
     /**

@@ -1,6 +1,10 @@
 <?php
 namespace SuiteMapper;
 
+use SuiteMapper\Converter\Converter;
+use SuiteMapper\Mapping\Mapping;
+use SuiteMapper\Mapping\MappingField;
+
 class QueryBuilder
 {
 	private $mapping;

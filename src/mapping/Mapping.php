@@ -24,6 +24,11 @@ class Mapping
     private $destinationIdentifier;
 
     /**
+     * @var int
+     */
+    private $status;
+
+    /**
      * @var array
      */
     private $mappingFields = [];
@@ -117,6 +122,22 @@ class Mapping
     }
 
     /**
+     * @return int
+     */
+    public function getStatus()
+    {
+        return $this->status;
+    }
+
+    /**
+     * @param int $status
+     */
+    public function setStatus($status)
+    {
+        $this->status = $status;
+    }
+    
+    /**
      * @return array
      */
     public function toArray()
@@ -136,7 +157,8 @@ class Mapping
                 'field' => $this->destinationIdentifier,
                 'table' => $this->destinationTable
             ],
-            'fields' => $fields
+            'fields' => $fields,
+            'status' => $this->status
         ];
     }
 
@@ -147,9 +169,9 @@ class Mapping
     public function fromArray(array $data)
     {
         $this->sourceTable = $data['source']['table'];
-        $this->sourceIdentifier = $data['source']['identifier'];
+        $this->sourceIdentifier = $data['source']['field'];
         $this->destinationTable = $data['destination']['table'];
-        $this->destinationIdentifier = $data['destination']['identifier'];
+        $this->destinationIdentifier = $data['destination']['field'];
 
         foreach ($data['fields'] as $field) {
             $this->mappingFields[] = (new MappingField())->fromArray($field);

@@ -35,7 +35,7 @@ class HttpStorage implements Storage
     {
         $ch = curl_init();
 
-        curl_setopt($ch, CURLOPT_URL, $file);
+        curl_setopt($ch, CURLOPT_URL, $this->baseUrl . $file);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
         $json = trim(curl_exec($ch));

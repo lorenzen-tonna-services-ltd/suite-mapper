@@ -80,8 +80,10 @@ class MappingManager
         }
 
         $mappings = json_decode($data, true);
-        foreach ($mappings as $mapping) {
-            $this->mappings[$type][] = (new Mapping())->fromArray($mapping);
+        if (!empty($mappings)) {
+            foreach ($mappings as $mapping) {
+                $this->mappings[$type][] = (new Mapping())->fromArray($mapping);
+            }
         }
         return true;
     }
@@ -99,8 +101,10 @@ class MappingManager
             }
 
             $relations = json_decode($data, true);
-            foreach ($relations as $relation) {
-                $this->relations[] = (new MappingRelation())->fromArray($relation);
+            if (!empty($relations)) {
+                foreach ($relations as $relation) {
+                    $this->relations[] = (new MappingRelation())->fromArray($relation);
+                }
             }
         }
 

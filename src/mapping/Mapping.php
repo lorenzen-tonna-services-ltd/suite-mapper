@@ -29,6 +29,11 @@ class Mapping
     private $status;
 
     /**
+     * @var string
+     */
+    private $title;
+
+    /**
      * @var array
      */
     private $mappingFields = [];
@@ -136,6 +141,22 @@ class Mapping
     {
         $this->status = $status;
     }
+
+    /**
+     * @return string
+     */
+    public function getTitle()
+    {
+        return $this->title;
+    }
+
+    /**
+     * @param string $title
+     */
+    public function setTitle($title)
+    {
+        $this->title = $title;
+    }
     
     /**
      * @return array
@@ -158,7 +179,8 @@ class Mapping
                 'table' => $this->destinationTable
             ],
             'fields' => $fields,
-            'status' => $this->status
+            'status' => $this->status,
+            'title' => $this->title
         ];
     }
 
@@ -172,6 +194,8 @@ class Mapping
         $this->sourceIdentifier = $data['source']['field'];
         $this->destinationTable = $data['destination']['table'];
         $this->destinationIdentifier = $data['destination']['field'];
+        $this->status = $data['status'];
+        $this->title = $data['title'];
 
         foreach ($data['fields'] as $field) {
             $this->mappingFields[] = (new MappingField())->fromArray($field);

@@ -2,6 +2,7 @@
 namespace SuiteMapper;
 
 use SuiteMapper\Mapping\Mapping;
+use SuiteMapper\Mapping\MappingRelation;
 use SuiteMapper\Storage\Storage;
 
 /**
@@ -18,6 +19,11 @@ class MappingManager
      * @var array
      */
     private $mappings = [];
+
+    /**
+     * @var array
+     */
+    private $relations = [];
 
 
     public function __construct(Storage $storage)
@@ -78,5 +84,36 @@ class MappingManager
             $this->mappings[$type][] = (new Mapping())->fromArray($mapping);
         }
         return true;
+    }
+
+    /**
+     * @param Mapping $mapping
+     * @return array|bool
+     */
+    public function getAvailableRelations(Mapping $mapping)
+    {
+        if (empty($this->relations)) {
+            $data = $this->storage->readJsonFromFile('relations.json');
+            if (empty($data)) {
+                return false;
+            }
+
+            $relations = json_decode($data, true);
+            foreach ($relations as $relation) {
+                $this->relations[] = (new MappingRelation())->fromArray($relation);
+            }
+        }
+
+        $availableRelations = [];
+
+        /** @var MappingRelation $relation */
+        foreach ($this->relations as $relation) {
+            if ($mapping->getDestinationTable() == $relation->getTableLeft() ||
+                $mapping->getDestinationTable() == $relation->getTableRight()) {
+                $availableRelations[] = $relation;
+            }
+        }
+
+        return $availableRelations;
     }
 }

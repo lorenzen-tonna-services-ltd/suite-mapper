@@ -104,9 +104,9 @@ class QueryBuilder
 
         /** @var MappingField $mappingField */
         foreach ($this->mapping->getMappingFields() as $mappingField) {
-            $query .= '`' . $mappingField->getDestinationField() . '`,';
-
             if (isset($data[$mappingField->getSourceField()])) {
+                $query .= '`' . $mappingField->getDestinationField() . '`,';
+
                 $value = $data[$mappingField->getSourceField()];
                 if ($mappingField->getConverter() instanceof Converter) {
                     $value = $mappingField->getConverter()->getConvertedValue($value);

@@ -124,12 +124,12 @@ class QueryBuilder
         $this->pdo->query($query);
     }
 
-    public function relate(Mapping $mapping, array $relations, array $data)
+    public function relate(array $relations, array $data)
     {
         // users (left) reminders (right) reminders.user_id
         /** @var MappingRelation $relation */
         foreach ($relations as $relation) {
-            $tableDir = $relation->getTableDirection($mapping->getDestinationTable());
+            $tableDir = $relation->getTableDirection($this->mapping->getDestinationTable());
             $identifierDir = $relation->getIdentifierDirection();
 
             if ($tableDir == $identifierDir) {

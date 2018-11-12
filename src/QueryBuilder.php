@@ -5,6 +5,7 @@ use SuiteMapper\Converter\Converter;
 use SuiteMapper\Mapping\Mapping;
 use SuiteMapper\Mapping\MappingField;
 use SuiteMapper\Mapping\MappingRelation;
+use SuiteMapper\Mapping\MappingRelationField;
 
 class QueryBuilder
 {
@@ -126,24 +127,178 @@ class QueryBuilder
 
     public function relate(array $relations, array $data)
     {
-        // users (left) reminders (right) reminders.user_id
         /** @var MappingRelation $relation */
         foreach ($relations as $relation) {
             $tableDir = $relation->getTableDirection($this->mapping->getDestinationTable());
             $identifierDir = $relation->getIdentifierDirection();
 
-            if ($tableDir == $identifierDir) {
-                // if table direction and identifier same direction = use mapping data (though need to use mapped field)
-
-            } else {
-                // if table direction and identifier different = select from table where reminders.user_id = users.id
+            $relationId = null;
+            /** @var MappingRelationField $field */
+            foreach ($relation->getFields() as $field) {
+                if ($field->getField() == 'id') {
+                    $relationId = $field->getValue();
+                }
             }
 
-            // get uuids of both sides (users) (reminders)
-            // does this specific relation exist already?
-            // if not, but entities exist, create relation
-            // if not, but not all entities exist, skip creation
-            // if, but not all entities exist, delete
+            // identifier will usually be in a table that is not 'contacts'
+            // so likely this case will mostly be entities like reminders, change-services, etc.
+            if ($tableDir == $identifierDir) {
+                /* get the identifiers value (eg. user id) */
+                $mainEntityUUID = null;
+
+                /** @var MappingField $field */
+                foreach ($this->mapping->getMappingFields() as $field) {
+                    if ($field->getDestinationField() == $relation->getIdentifier(true)) {
+                        $mainEntityUUID = $data[$field->getSourceField()];
+                        break;
+                    }
+                }
+
+                /* get uuid of the currenty entity */
+                $otherEntityUUID = $data[$this->mapping->getSourceIdentifier()];
+
+                /* we know the 'other entity' exists - as we are handling it right now */
+                if ($tableDir == 'right') {
+                    $otherTable = $relation->getTableLeft();
+                } else {
+                    $otherTable = $relation->getTableRight();
+                }
+
+                /* so we just verify main entity exists as well before setting up the relation */
+                $query  = "SELECT * FROM ". $otherTable ." WHERE id = '". $mainEntityUUID ."' ";
+
+                $result = $this->pdo->query($query)->fetch(\PDO::FETCH_ASSOC);
+                if (!isset($result['id'])) {
+                    /* if other entity does not exist, return - there's nothing to do here yet */
+                    return;
+                }
+
+                /* generate insert (ignore) query */
+                $query  = $this->generateInsertRelationQuery($relation, $mainEntityUUID, $otherEntityUUID);
+
+                $this->pdo->query($query);
+            } else {
+                $table = null;
+
+                /* generate query to select related entities from 'other' table */
+                if ($tableDir == 'right') {
+                    /* we keep the 'table' to more easily identify the belonging uuid later on */
+                    $table = $relation->getTableLeft();
+                } else {
+                    $table = $relation->getTableRight();
+                }
+
+                $query = "SELECT id FROM ". $table ." WHERE ". $relation->getIdentifier(true) ." = '". $data['id'] ."'";
+
+                /* fetch all related entities and create relationship for each */
+                $result = $this->pdo->query($query)->fetchAll(\PDO::FETCH_ASSOC);
+                foreach ($result as $row) {
+                    /* generate insert (ignore) query */
+                    $query = $this->generateInsertRelationQuery($relation, $row['id'], $data['id']);
+
+                    $this->pdo->query($query);
+                }
+            }
+        }
+
+    }
+
+    private function generateInsertRelationQuery(MappingRelation $relation, $mainUUID, $otherUUID)
+    {
+        /* generate insert (ignore) query */
+        $query  = "INSERT IGNORE INTO ". $relation->getTable() ."(";
+
+        $values = '';
+
+        /* we iterate over the relationship fields and determine each fields value */
+        foreach ($relation->getFields() as $field) {
+            $query .= $field->getField() .",";
+
+            if ($field->getValue() !== null) {
+                /* ... that can be a fixed value stored in the relation definition */
+                $values .= "'". $field->getValue() ."',";
+            } else if ($field->getFunction() !== null) {
+                /* ... or a function (we currently support uuid() and now()) */
+                switch ($field->getFunction()) {
+                    case 'uuid':
+                        $values .= "'". $this->generateUUID() ."',";
+                        break;
+                    case 'now':
+                        $values .= "'". date('Y-m-d H:i:s') ."',";
+                        break;
+                }
+            } else if ($field->getSource() !== null) {
+                $parts = explode('.', $field->getSource());
+
+                if ($parts[0] == $this->mapping->getDestinationTable()) {
+                    $values .= "'". $otherUUID ."',";
+                } else if ($parts[0] == $otherTable) {
+                    $values .= "'". $mainUUID ."',";
+                }
+            }
+        }
+
+        $query  = substr($query, 0, -1);
+        $query .= ") VALUES(". substr($values, 0, -1) .");";
+
+        return $query;
+    }
+
+    /**
+     * @return string
+     */
+    private function generateUUID()
+    {
+        $microTime = microtime();
+        list($a_dec, $a_sec) = explode(' ', $microTime);
+
+        $dec_hex = dechex($a_dec * 1000000);
+        $sec_hex = dechex($a_sec);
+
+        $this->ensureLength($dec_hex, 5);
+        $this->ensureLength($sec_hex, 6);
+
+        $guid = '';
+        $guid .= $dec_hex;
+        $guid .= $this->generateUUIDSection(3);
+        $guid .= '-';
+        $guid .= $this->generateUUIDSection(4);
+        $guid .= '-';
+        $guid .= $this->generateUUIDSection(4);
+        $guid .= '-';
+        $guid .= $this->generateUUIDSection(4);
+        $guid .= '-';
+        $guid .= $sec_hex;
+        $guid .= $this->generateUUIDSection(6);
+
+        return $guid;
+    }
+
+    /**
+     * @param int $characters
+     * @return string
+     */
+    private function generateUUIDSection($characters)
+    {
+        $return = '';
+        for ($i = 0; $i < $characters; ++$i) {
+            $return .= dechex(mt_rand(0, 15));
+        }
+
+        return $return;
+    }
+
+    /**
+     * @param string $string
+     * @param int $length
+     */
+    private function ensureLength(&$string, $length)
+    {
+        $strlen = strlen($string);
+        if ($strlen < $length) {
+            $string = str_pad($string, $length, '0');
+        } elseif ($strlen > $length) {
+            $string = substr($string, 0, $length);
         }
     }
 }

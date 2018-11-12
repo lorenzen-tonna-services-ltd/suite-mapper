@@ -89,6 +89,28 @@ class MappingManager
     }
 
     /**
+     * @return array|bool
+     */
+    public function getAllRelations()
+    {
+        if (empty($this->relations)) {
+            $data = $this->storage->readJsonFromFile('relations.json');
+            if (empty($data)) {
+                return false;
+            }
+
+            $relations = json_decode($data, true);
+            if (!empty($relations)) {
+                foreach ($relations as $relation) {
+                    $this->relations[] = (new MappingRelation())->fromArray($relation);
+                }
+            }
+        }
+        
+        return $this->relations;
+    }
+
+    /**
      * @param Mapping $mapping
      * @return array|bool
      */

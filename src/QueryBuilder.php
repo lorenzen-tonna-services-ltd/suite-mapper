@@ -174,7 +174,7 @@ class QueryBuilder
                 }
 
                 /* generate insert (ignore) query */
-                $query  = $this->generateInsertRelationQuery($relation, $mainEntityUUID, $otherEntityUUID);
+                $query  = $this->generateInsertRelationQuery($relation, $mainEntityUUID, $otherEntityUUID, $otherTable);
 
                 $this->pdo->query($query);
             } else {
@@ -194,7 +194,7 @@ class QueryBuilder
                 $result = $this->pdo->query($query)->fetchAll(\PDO::FETCH_ASSOC);
                 foreach ($result as $row) {
                     /* generate insert (ignore) query */
-                    $query = $this->generateInsertRelationQuery($relation, $row['id'], $data['id']);
+                    $query = $this->generateInsertRelationQuery($relation, $row['id'], $data['id'], $table);
 
                     $this->pdo->query($query);
                 }
@@ -203,7 +203,7 @@ class QueryBuilder
 
     }
 
-    private function generateInsertRelationQuery(MappingRelation $relation, $mainUUID, $otherUUID)
+    private function generateInsertRelationQuery(MappingRelation $relation, $mainUUID, $otherUUID, $otherTable)
     {
         /* generate insert (ignore) query */
         $query  = "INSERT IGNORE INTO ". $relation->getTable() ."(";
@@ -211,6 +211,7 @@ class QueryBuilder
         $values = '';
 
         /* we iterate over the relationship fields and determine each fields value */
+        /** @var MappingRelationField $field */
         foreach ($relation->getFields() as $field) {
             $query .= $field->getField() .",";
 

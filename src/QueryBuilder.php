@@ -47,7 +47,7 @@ class QueryBuilder
         $query  = 'SELECT COUNT(*) AS entries FROM ' . $this->mapping->getDestinationTable();
         $query .= ' WHERE `' . $this->mapping->getDestinationIdentifier() .'` =';
         $query .= ' "'. $data[$this->mapping->getSourceIdentifier()] .'";';
-
+echo $query;
         $result = $this->pdo->query($query)->fetch(\PDO::FETCH_ASSOC);
         if ($result['entries'] >= 1) {
             $this->update($data);
@@ -150,7 +150,7 @@ class QueryBuilder
     {
         $statement = $this->pdo->prepare('SELECT id FROM email_addresses WHERE email_address = ?');
         $statement->execute([$email]);
-
+echo "STORING EMAIL";
         $id = $statement->fetchColumn(0);
         if (empty($id)) {
             $id = $this->generateUUID();
@@ -164,7 +164,7 @@ class QueryBuilder
 
         $idRelation = $statement->fetchColumn(0);
         if (empty($idRelation)) {
-            $statement = $this->pdo->prepare('INSERT INTO email_addr_bean_rel(id,email_address_id,bean_id,bean_module,primary_address,date_created) VALUES(?,?,?,?,?)');
+            $statement = $this->pdo->prepare('INSERT INTO email_addr_bean_rel(id,email_address_id,bean_id,bean_module,primary_address,date_created) VALUES(?,?,?,?,?,?)');
             $statement->execute([$this->generateUUID(), $id, $uuid, $this->table2module[$this->mapping->getDestinationTable()], (int)$primary, date('Y-m-d H:i:s')]);
         }
     }

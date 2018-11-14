@@ -20,6 +20,14 @@ class QueryBuilder
     private $pdo;
 
     /**
+     * @var array
+     */
+    private $table2module = [
+        'contacts' => 'Contacts',
+        'ws_wechselservice' => 'ws_Wechselservice',
+    ];
+
+    /**
      * QueryBuilder constructor.
      *
      * @param Mapping $mapping
@@ -105,6 +113,14 @@ class QueryBuilder
 
         /** @var MappingField $mappingField */
         foreach ($this->mapping->getMappingFields() as $mappingField) {
+            if (in_array($mappingField->getDestinationField(), ['email', 'email_primary'])) {
+                $this->email(
+                    $data[$this->mapping->getSourceIdentifier()],
+                    $data[$mappingField->getSourceField()],
+                    ($mappingField->getDestinationField() == 'email_primary')
+                );
+            }
+
             if (isset($data[$mappingField->getSourceField()])) {
                 $query .= '`' . $mappingField->getDestinationField() . '`,';
 
@@ -123,6 +139,34 @@ class QueryBuilder
         $query .= ') VALUES (' . $values .');';
 
         $this->pdo->query($query);
+    }
+
+    /**
+     * @param string $uuid
+     * @param string $email
+     * @param bool $primary
+     */
+    private function email($uuid, $email, $primary)
+    {
+        $statement = $this->pdo->prepare('SELECT id FROM email_addresses WHERE email_address = ?');
+        $statement->execute([$email]);
+
+        $id = $statement->fetchColumn(0);
+        if (empty($id)) {
+            $id = $this->generateUUID();
+
+            $statement = $this->pdo->prepare('INSERT INTO email_addresses(id,email_address,email_address_caps,date_created) VALUES(?,?,?,?)');
+            $statement->execute([$id, $email, mb_strtoupper($email), date('Y-m-d H:i:s')]);
+        }
+
+        $statement = $this->pdo->prepare('SELECT id FROM email_addr_bean_rel WHERE email_address_id = ? AND bean_module = ?');
+        $statement->execute([$id, $this->table2module[$this->mapping->getDestinationTable()]]);
+
+        $idRelation = $statement->fetchColumn(0);
+        if (empty($idRelation)) {
+            $statement = $this->pdo->prepare('INSERT INTO email_addr_bean_rel(id,email_address_id,bean_id,bean_module,primary_address,date_created) VALUES(?,?,?,?,?)');
+            $statement->execute([$this->generateUUID(), $id, $uuid, $this->table2module[$this->mapping->getDestinationTable()], (int)$primary, date('Y-m-d H:i:s')]);
+        }
     }
 
     public function relate(array $relations, array $data)

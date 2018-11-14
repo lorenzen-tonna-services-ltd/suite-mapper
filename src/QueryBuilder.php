@@ -47,7 +47,7 @@ class QueryBuilder
         $query  = 'SELECT COUNT(*) AS entries FROM ' . $this->mapping->getDestinationTable();
         $query .= ' WHERE `' . $this->mapping->getDestinationIdentifier() .'` =';
         $query .= ' "'. $data[$this->mapping->getSourceIdentifier()] .'";';
-echo $query;
+
         $result = $this->pdo->query($query)->fetch(\PDO::FETCH_ASSOC);
         if ($result['entries'] >= 1) {
             $this->update($data);
@@ -119,6 +119,8 @@ echo $query;
                     $data[$mappingField->getSourceField()],
                     ($mappingField->getDestinationField() == 'email_primary')
                 );
+
+                continue;
             }
 
             if (isset($data[$mappingField->getSourceField()])) {
@@ -150,7 +152,7 @@ echo $query;
     {
         $statement = $this->pdo->prepare('SELECT id FROM email_addresses WHERE email_address = ?');
         $statement->execute([$email]);
-echo "STORING EMAIL";
+
         $id = $statement->fetchColumn(0);
         if (empty($id)) {
             $id = $this->generateUUID();

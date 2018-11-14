@@ -78,6 +78,16 @@ class QueryBuilder
 
         /** @var MappingField $mappingField */
         foreach ($this->mapping->getMappingFields() as $mappingField) {
+            if (in_array($mappingField->getDestinationField(), ['email', 'email_primary'])) {
+                $this->email(
+                    $data[$this->mapping->getSourceIdentifier()],
+                    $data[$mappingField->getSourceField()],
+                    ($mappingField->getDestinationField() == 'email_primary')
+                );
+
+                continue;
+            }
+
             if (isset($data[$mappingField->getSourceField()])) {
                 $query .= ' `'.$mappingField->getDestinationField() . '` = ';
 
@@ -191,7 +201,6 @@ class QueryBuilder
             if ($tableDir == $identifierDir) {
                 /* get the identifiers value (eg. user id) */
                 $mainEntityUUID = null;
-
                 /** @var MappingField $field */
                 foreach ($this->mapping->getMappingFields() as $field) {
                     if ($field->getDestinationField() == $relation->getIdentifier(true)) {

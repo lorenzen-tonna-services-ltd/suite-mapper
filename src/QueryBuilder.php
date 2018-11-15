@@ -201,9 +201,13 @@ class QueryBuilder
             if ($tableDir == $identifierDir) {
                 /* get the identifiers value (eg. user id) */
                 $mainEntityUUID = null;
+
                 /** @var MappingField $field */
                 foreach ($this->mapping->getMappingFields() as $field) {
                     if ($field->getDestinationField() == $relation->getIdentifier(true)) {
+                        if (!isset($data[$field->getSourceField()])) {
+                            return;
+                        }
                         $mainEntityUUID = $data[$field->getSourceField()];
                         break;
                     }
@@ -229,9 +233,7 @@ class QueryBuilder
                 }
 
                 /* generate insert (ignore) query */
-                $query  = $this->generateInsertRelationQuery($relation, $mainEntityUUID, $otherEntityUUID, $otherTable);
-
-                $this->pdo->query($query);
+                $this->executeInsertRelationQuery($relation, $mainEntityUUID, $otherEntityUUID, $otherTable);
             } else {
                 $table = null;
 
@@ -249,55 +251,73 @@ class QueryBuilder
                 $result = $this->pdo->query($query)->fetchAll(\PDO::FETCH_ASSOC);
                 foreach ($result as $row) {
                     /* generate insert (ignore) query */
-                    $query = $this->generateInsertRelationQuery($relation, $row['id'], $data['id'], $table);
-
-                    $this->pdo->query($query);
+                    $this->executeInsertRelationQuery($relation, $row['id'], $data['id'], $table);
                 }
             }
         }
 
     }
 
-    private function generateInsertRelationQuery(MappingRelation $relation, $mainUUID, $otherUUID, $otherTable)
+    private function executeInsertRelationQuery(MappingRelation $relation, $mainUUID, $otherUUID, $otherTable)
     {
         /* generate insert (ignore) query */
         $query  = "INSERT IGNORE INTO ". $relation->getTable() ."(";
+        $exists = "SELECT id FROM ". $relation->getTable() ." WHERE ";
 
         $values = '';
 
         /* we iterate over the relationship fields and determine each fields value */
         /** @var MappingRelationField $field */
         foreach ($relation->getFields() as $field) {
-            $query .= $field->getField() .",";
+            $value = null;
 
             if ($field->getValue() !== null) {
                 /* ... that can be a fixed value stored in the relation definition */
-                $values .= "'". $field->getValue() ."',";
+                $value = $field->getValue();
             } else if ($field->getFunction() !== null) {
                 /* ... or a function (we currently support uuid() and now()) */
                 switch ($field->getFunction()) {
                     case 'uuid':
-                        $values .= "'". $this->generateUUID() ."',";
+                        $value = $this->generateUUID();
                         break;
                     case 'now':
-                        $values .= "'". date('Y-m-d H:i:s') ."',";
+                        $value = date('Y-m-d H:i:s');
                         break;
                 }
             } else if ($field->getSource() !== null) {
                 $parts = explode('.', $field->getSource());
 
                 if ($parts[0] == $this->mapping->getDestinationTable()) {
-                    $values .= "'". $otherUUID ."',";
+                    $value = $otherUUID;
                 } else if ($parts[0] == $otherTable) {
-                    $values .= "'". $mainUUID ."',";
+                    $value = $mainUUID;
+                }
+            }
+
+            if (!empty($value)) {
+                $query .= $field->getField() .",";
+                $values.= "'". $value ."',";
+
+                if (!in_array($field->getField(), ['id','date_modified'])) {
+                    $exists.= $field->getField() ." = '". $value ."' AND ";
                 }
             }
         }
 
+        /* remove last comma from query */
         $query  = substr($query, 0, -1);
         $query .= ") VALUES(". substr($values, 0, -1) .");";
 
-        return $query;
+        /* remove last AND from query */
+        $exists = substr($exists, 0, -4);
+
+        /* relation does exist already, return early */
+        $result = $this->pdo->query($exists)->fetch(\PDO::FETCH_ASSOC);
+        if (isset($result['id'])) {
+            return;
+        }
+
+        $this->pdo->query($query);
     }
 
     /**

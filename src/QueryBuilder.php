@@ -119,7 +119,7 @@ class QueryBuilder
                     if ($arrayElement) {
                         $query .= '"' . $arrayElement . '",';
                     } else {
-                        $values .= '"",';
+                        $query .= '"",';
                     }
                 } else {
                     $query .= '"' . $value . '",';

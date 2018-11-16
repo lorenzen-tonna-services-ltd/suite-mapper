@@ -22,6 +22,11 @@ class MappingField
     private $destinationField;
 
     /**
+     * @var bool
+     */
+    private $isCustom = false;
+
+    /**
      * @return Converter
      */
     public function getConverter()
@@ -70,6 +75,22 @@ class MappingField
     }
 
     /**
+     * @return bool
+     */
+    public function isCustom()
+    {
+        return $this->isCustom;
+    }
+
+    /**
+     * @param bool $bool
+     */
+    public function setCustom($bool)
+    {
+        $this->isCustom = $bool;
+    }
+
+    /**
      * @return array
      */
     public function toArray()
@@ -82,7 +103,8 @@ class MappingField
         return [
             'converter' => $converterKey,
             'sourceField' => $this->sourceField,
-            'destinationField' => $this->destinationField
+            'destinationField' => $this->destinationField,
+            'isCustom' => $this->isCustom,
         ];
     }
 
@@ -91,6 +113,10 @@ class MappingField
         $this->converter = (new ConverterRegistry())->getConverterByKey($data['converter']);
         $this->sourceField = $data['sourceField'];
         $this->destinationField = $data['destinationField'];
+        
+        if (isset($data['isCustom'])) {
+            $this->isCustom = $data['isCustom'];
+        }
 
         return $this;
     }

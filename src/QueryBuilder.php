@@ -28,6 +28,16 @@ class QueryBuilder
     ];
 
     /**
+     * @var array 
+     */
+    private $type2suite = [
+        'REMINDER' => 'rmd_reminder_cstm',
+        'OFFER' => 'ang_angebote_cstm',
+        'CHANGESERVICE' => 'ws_wechselservice_cstm',
+        'USER' => 'contacts_cstm',
+    ];
+
+    /**
      * QueryBuilder constructor.
      *
      * @param Mapping $mapping
@@ -52,6 +62,13 @@ class QueryBuilder
         if ($result['entries'] >= 1) {
             $this->update($data);
         } else {
+            if ($this->mapping->getSourceTable() == 'external-id-mapping' && $this->mapping->getDestinationTable() != 'eim_externalidmapping') {
+                if (isset($data['type']) && $this->type2suite[$data['type']] == $this->mapping->getDestinationTable()) {
+                    $this->create($data);
+                }
+
+                return;
+            }
             $this->create($data);
         }
     }
@@ -96,7 +113,17 @@ class QueryBuilder
                     $value = $mappingField->getConverter()->getConvertedValue($value);
                 }
 
-                $query .= '"' . $value . '",';
+                /* json field handling - can go to any level of depthness */
+                if (is_array($value)) {
+                    $arrayElement = $this->getArrayElement($data, $mappingField->getSourceField());
+                    if ($arrayElement) {
+                        $query .= '"' . $arrayElement . '",';
+                    } else {
+                        $values .= '"",';
+                    }
+                } else {
+                    $query .= '"' . $value . '",';
+                }
             }
         }
 
@@ -141,7 +168,16 @@ class QueryBuilder
                     $value = $mappingField->getConverter()->getConvertedValue($value);
                 }
 
-                $values .= '"'. $value . '",';
+                if (is_array($value)) {
+                    $arrayElement = $this->getArrayElement($data, $mappingField->getSourceField());
+                    if ($arrayElement) {
+                        $values .= '"' . $arrayElement . '",';
+                    } else {
+                        $values .= '"",';
+                    }
+                } else {
+                    $values .= '"'. $value . '",';
+                }
             }
         }
 
@@ -376,5 +412,37 @@ class QueryBuilder
         } elseif ($strlen > $length) {
             $string = substr($string, 0, $length);
         }
+    }
+
+    /**
+     * @param array $data
+     * @param string $field
+     * @return bool|mixed|null
+     */
+    private function getArrayElement(array $data, $field)
+    {
+        $arrayIndexes = explode('.', $field);
+
+        $lastElement = null;
+        foreach ($arrayIndexes as $index => $key) {
+            if ($index == 0) {
+                if (isset($data[$key])) {
+                    $lastElement = $data[$key];
+                } else {
+                    break;
+                }
+            } else {
+                if (isset($lastElement[$key])) {
+                    $lastElement = $lastElement[$key];
+                } else {
+                    break;
+                }
+            }
+        }
+
+        if (!is_array($lastElement)) {
+            return $lastElement;
+        }
+        return false;
     }
 }

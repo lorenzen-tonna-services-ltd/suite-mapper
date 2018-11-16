@@ -6,6 +6,7 @@ use SuiteMapper\Mapping\Mapping;
 use SuiteMapper\Mapping\MappingField;
 use SuiteMapper\Mapping\MappingRelation;
 use SuiteMapper\Mapping\MappingRelationField;
+use Symfony\Component\Console\Logger\ConsoleLogger;
 
 class QueryBuilder
 {
@@ -38,15 +39,21 @@ class QueryBuilder
     ];
 
     /**
+     * @var ConsoleLogger
+     */
+    private $logger;
+
+    /**
      * QueryBuilder constructor.
      *
      * @param Mapping $mapping
      * @param \PDO $pdo
      */
-    public function __construct(Mapping $mapping, \PDO $pdo)
+    public function __construct(Mapping $mapping, \PDO $pdo, &$logger)
     {
         $this->mapping = $mapping;
         $this->pdo = $pdo;
+        $this->logger = $logger;
     }
 
     /**
@@ -133,7 +140,10 @@ class QueryBuilder
         $query .= ' WHERE `' . $this->mapping->getDestinationIdentifier() . '` =';
         $query .= ' "'. $data[$this->mapping->getSourceIdentifier()] .'";';
 
-        $this->pdo->query($query);
+        $success = $this->pdo->query($query);
+        if (!$success) {
+            $this->logger->error(sprintf('Error occured on SQL update: %s', $this->pdo->errorInfo()[2]));
+        }
     }
 
     /**
@@ -186,7 +196,10 @@ class QueryBuilder
 
         $query .= ') VALUES (' . $values .');';
 
-        $this->pdo->query($query);
+        $success = $this->pdo->query($query);
+        if (!$success) {
+            $this->logger->error(sprintf('Error occured on SQL insert: %s', $this->pdo->errorInfo()[2]));
+        }
     }
 
     /**

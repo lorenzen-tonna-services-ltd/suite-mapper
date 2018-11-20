@@ -122,6 +122,10 @@ class QueryBuilder
                     $value = $mappingField->getConverter()->getConvertedValue($value);
                 }
 
+                if ($mappingField->getFunction() == 'ifnull' && empty($value)) {
+                    $value = $mappingField->getData();
+                }
+
                 /* json field handling - can go to any level of depthness */
                 if (is_array($value)) {
                     $arrayElement = $this->getArrayElement($data, $mappingField->getSourceField());
@@ -185,6 +189,10 @@ class QueryBuilder
                 $value = $data[$mappingField->getSourceField()];
                 if ($mappingField->getConverter() instanceof Converter) {
                     $value = $mappingField->getConverter()->getConvertedValue($value);
+                }
+
+                if ($mappingField->getFunction() == 'ifnull' && empty($value)) {
+                    $value = $mappingField->getData();
                 }
 
                 if (is_array($value)) {

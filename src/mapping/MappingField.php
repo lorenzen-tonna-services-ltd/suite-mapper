@@ -14,6 +14,16 @@ class MappingField
     /**
      * @var string
      */
+    private $function;
+
+    /**
+     * @var string
+     */
+    private $data;
+
+    /**
+     * @var string
+     */
     private $sourceField;
 
     /**
@@ -91,6 +101,38 @@ class MappingField
     }
 
     /**
+     * @return string
+     */
+    public function getFunction()
+    {
+        return $this->function;
+    }
+
+    /**
+     * @param string $function
+     */
+    public function setFunction($function)
+    {
+        $this->function = $function;
+    }
+
+    /**
+     * @return string
+     */
+    public function getData()
+    {
+        return $this->data;
+    }
+
+    /**
+     * @param string $data
+     */
+    public function setData($data)
+    {
+        $this->data = $data;
+    }
+
+    /**
      * @return array
      */
     public function toArray()
@@ -105,17 +147,19 @@ class MappingField
             'sourceField' => $this->sourceField,
             'destinationField' => $this->destinationField,
             'isCustom' => $this->isCustom,
+            'function' => $this->function,
+            'data' => $this->data
         ];
     }
 
     public function fromArray(array $data)
     {
         $this->converter = (new ConverterRegistry())->getConverterByKey($data['converter']);
-        $this->sourceField = $data['sourceField'];
-        $this->destinationField = $data['destinationField'];
-        
-        if (isset($data['isCustom'])) {
-            $this->isCustom = $data['isCustom'];
+
+        foreach (['sourceField', 'destinationField', 'isCustom', 'data', 'function'] as $key) {
+            if (isset($data[$key])) {
+                $this->$key = $data[$key];
+            }
         }
 
         return $this;

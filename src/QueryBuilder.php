@@ -113,11 +113,24 @@ class QueryBuilder
 
                 continue;
             }
+            
+            $value = null;
 
             if (isset($data[$mappingField->getSourceField()])) {
                 $query .= ' `'.$mappingField->getDestinationField() . '` = ';
 
                 $value = $data[$mappingField->getSourceField()];
+
+                /* json field handling - can go to any level of depthness */
+                if (is_array($value)) {
+                    $arrayElement = $this->getArrayElement($data, $mappingField->getSourceField());
+                    if ($arrayElement) {
+                        $value = $arrayElement;
+                    } else {
+                        $value = '';
+                    }
+                }
+                
                 if ($mappingField->getConverter() instanceof Converter) {
                     $value = $mappingField->getConverter()->getConvertedValue($value);
                 }
@@ -130,19 +143,23 @@ class QueryBuilder
                     }
                 }
 
-                /* json field handling - can go to any level of depthness */
-                if (is_array($value)) {
-                    $arrayElement = $this->getArrayElement($data, $mappingField->getSourceField());
-                    if ($arrayElement) {
-                        $query .= '"' . $arrayElement . '",';
-                    } else {
-                        $query .= '"",';
-                    }
-                } else {
-                    $query .= '"' . $value . '",';
-                }
-
                 $setValues = true;
+            } else {
+                if ($mappingField->getFunction() == 'ifnull' && empty($value)) {
+                    $query .= ' `'.$mappingField->getDestinationField() . '` = ';
+
+                    if (substr($mappingField->getData(), 0, 6) == 'field.') {
+                        $value = $data[substr($mappingField->getData(), 6)];
+                    } else {
+                        $value = $mappingField->getData();
+                    }
+                    
+                    $setValues = true;
+                }
+            }
+            
+            if ($value !== null) {
+                $query .= '"' . $value . '",';
             }
         }
 
@@ -187,10 +204,22 @@ class QueryBuilder
                 continue;
             }
 
+            $value = null;
+
             if (isset($data[$mappingField->getSourceField()])) {
                 $query .= '`' . $mappingField->getDestinationField() . '`,';
 
                 $value = $data[$mappingField->getSourceField()];
+
+                if (is_array($value)) {
+                    $arrayElement = $this->getArrayElement($data, $mappingField->getSourceField());
+                    if ($arrayElement) {
+                        $value = $arrayElement;
+                    } else {
+                        $value = '';
+                    }
+                }
+
                 if ($mappingField->getConverter() instanceof Converter) {
                     $value = $mappingField->getConverter()->getConvertedValue($value);
                 }
@@ -202,17 +231,20 @@ class QueryBuilder
                         $value = $mappingField->getData();
                     }
                 }
+            } else {
+                if ($mappingField->getFunction() == 'ifnull' && empty($value)) {
+                    $query .= '`' . $mappingField->getDestinationField() . '`,';
 
-                if (is_array($value)) {
-                    $arrayElement = $this->getArrayElement($data, $mappingField->getSourceField());
-                    if ($arrayElement) {
-                        $values .= '"' . $arrayElement . '",';
+                    if (substr($mappingField->getData(), 0, 6) == 'field.') {
+                        $value = $data[substr($mappingField->getData(), 6)];
                     } else {
-                        $values .= '"",';
+                        $value = $mappingField->getData();
                     }
-                } else {
-                    $values .= '"'. $value . '",';
                 }
+            }
+
+            if ($value !== null) {
+                $values .= '"'. $value . '",';
             }
         }
 

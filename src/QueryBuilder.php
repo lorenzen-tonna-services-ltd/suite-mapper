@@ -100,6 +100,8 @@ class QueryBuilder
         $query  = 'UPDATE ' . $this->mapping->getDestinationTable();
         $query .= ' SET ';
 
+        $setValues = false;
+
         /** @var MappingField $mappingField */
         foreach ($this->mapping->getMappingFields() as $mappingField) {
             if (in_array($mappingField->getDestinationField(), ['email', 'email_primary'])) {
@@ -131,7 +133,14 @@ class QueryBuilder
                 } else {
                     $query .= '"' . $value . '",';
                 }
+
+                $setValues = true;
             }
+        }
+
+        /* no values have been set, can skip here */
+        if (!$setValues) {
+            return;
         }
 
         /* remove the , that is now left at the end of the query */
@@ -142,7 +151,7 @@ class QueryBuilder
 
         $success = $this->pdo->query($query);
         if (!$success) {
-            $this->logger->error(sprintf('Error occured on SQL update: %s', $this->pdo->errorInfo()[2]));
+            $this->logger->error(sprintf('Error occurred on SQL update: %s', $this->pdo->errorInfo()[2]));
         }
     }
 
@@ -198,7 +207,7 @@ class QueryBuilder
 
         $success = $this->pdo->query($query);
         if (!$success) {
-            $this->logger->error(sprintf('Error occured on SQL insert: %s', $this->pdo->errorInfo()[2]));
+            $this->logger->error(sprintf('Error occurred on SQL insert: %s', $this->pdo->errorInfo()[2]));
         }
     }
 
@@ -366,7 +375,10 @@ class QueryBuilder
             return;
         }
 
-        $this->pdo->query($query);
+        $success = $this->pdo->query($query);
+        if (!$success) {
+            $this->logger->error(sprintf('Error occurred on SQL relation: %s', $this->pdo->errorInfo()[2]));
+        }
     }
 
     /**

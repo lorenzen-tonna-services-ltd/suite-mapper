@@ -123,7 +123,11 @@ class QueryBuilder
                 }
 
                 if ($mappingField->getFunction() == 'ifnull' && empty($value)) {
-                    $value = $mappingField->getData();
+                    if (substr($mappingField->getData(), 0, 6) == 'field.') {
+                        $value = $data[substr($mappingField->getData(), 6)];
+                    } else {
+                        $value = $mappingField->getData();
+                    }
                 }
 
                 /* json field handling - can go to any level of depthness */

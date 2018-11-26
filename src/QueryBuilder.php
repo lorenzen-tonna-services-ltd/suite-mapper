@@ -2,11 +2,11 @@
 namespace SuiteMapper;
 
 use SuiteMapper\Converter\Converter;
+use SuiteMapper\Hook\HookRegistry;
 use SuiteMapper\Mapping\Mapping;
 use SuiteMapper\Mapping\MappingField;
 use SuiteMapper\Mapping\MappingRelation;
 use SuiteMapper\Mapping\MappingRelationField;
-use Symfony\Component\Console\Logger\ConsoleLogger;
 
 class QueryBuilder
 {
@@ -44,16 +44,24 @@ class QueryBuilder
     private $logger;
 
     /**
+     * @var HookRegistry
+     */
+    private $registry;
+
+    /**
      * QueryBuilder constructor.
      *
      * @param Mapping $mapping
      * @param \PDO $pdo
+     * @param $logger
+     * @param HookRegistry $registry
      */
-    public function __construct(Mapping $mapping, \PDO $pdo, &$logger)
+    public function __construct(Mapping $mapping, \PDO $pdo, &$logger, $registry)
     {
         $this->mapping = $mapping;
         $this->pdo = $pdo;
         $this->logger = $logger;
+        $this->registry = $registry;
     }
 
     /**
@@ -61,6 +69,10 @@ class QueryBuilder
      */
     public function createOrUpdate(array $data)
     {
+        $this->registry->executeHooksBySyncType(
+            $this->mapping->getSourceTable(), HookRegistry::EXEC_TYPE_PRE, $data
+        );
+
         $query  = 'SELECT COUNT(*) AS entries FROM ' . $this->mapping->getDestinationTable();
         $query .= ' WHERE `' . $this->mapping->getDestinationIdentifier() .'` =';
         $query .= ' "'. $data[$this->mapping->getSourceIdentifier()] .'";';
@@ -78,6 +90,10 @@ class QueryBuilder
             }
             $this->create($data);
         }
+
+        $this->registry->executeHooksBySyncType(
+            $this->mapping->getSourceTable(), HookRegistry::EXEC_TYPE_POST, $data
+        );
     }
 
     /**

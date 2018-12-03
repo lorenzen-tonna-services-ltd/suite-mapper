@@ -252,7 +252,10 @@ class QueryBuilder
                     $query .= '`' . $mappingField->getDestinationField() . '`,';
 
                     if (substr($mappingField->getData(), 0, 6) == 'field.') {
-                        $value = $data[substr($mappingField->getData(), 6)];
+                        $value = '';
+                        if (isset($data[substr($mappingField->getData(), 6)])) {
+                            $value = $data[substr($mappingField->getData(), 6)];
+                        }
                     } else {
                         $value = $mappingField->getData();
                     }

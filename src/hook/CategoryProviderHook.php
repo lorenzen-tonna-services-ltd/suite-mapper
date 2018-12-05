@@ -42,7 +42,7 @@ class CategoryProviderHook implements Hook
                 if (!empty($res)) {
                     $sth = $this->pdo->prepare(
                         "INSERT INTO cp_categoryprovider(
-                            id, category_provider_id, created, date_modified, category_id,
+                            id, category_provider_id, date_entered, date_modified, category_id,
                             category_created, category_lastmodified, category_category_type,
                             category_category_name, category_slug, category_icon,
                             category_sort_priority, category_description, company_id,
@@ -107,7 +107,7 @@ class CategoryProviderHook implements Hook
                         $sth = $this->pdo->prepare(
                             "UPDATE cp_categoryprovider SET 
                                 category_provider_id = :category_provider_id,
-                                created = :created,
+                                date_entered = :created,
                                 date_modified = :lastModified,
                                 category_id = :category_id, 
                                 category_created = :category_created, 
@@ -181,7 +181,7 @@ class CategoryProviderHook implements Hook
      */
     public function getSyncType()
     {
-        return 'change-service';
+        return 'change-services';
     }
 
     /**

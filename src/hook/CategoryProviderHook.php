@@ -24,7 +24,8 @@ class CategoryProviderHook implements Hook
             return;
         }
 
-        if (!isset($data['categoryProviderName']) || empty($data['categoryProviderName'])) {
+        if (!isset($data['categoryProviderName']) || empty($data['categoryProviderName']) ||
+            !isset($data['currentProviderName']) || empty($data['currentProviderName'])) {
             $sth = $this->pdo->prepare(
                 "SELECT company_company_name, date_modified FROM cp_categoryprovider WHERE id = :id"
             );
@@ -93,6 +94,7 @@ class CategoryProviderHook implements Hook
                     ]);
 
                     $data['categoryProviderName'] = $res['company']['companyName'];
+                    $data['currentProviderName'] = $res['company']['companyName'];
                 }
             } else {
                 if ((strtotime($provider['date_modified']) + 3600) < time()) {
@@ -170,6 +172,7 @@ class CategoryProviderHook implements Hook
                 }
 
                 $data['categoryProviderName'] = $provider['company_company_name'];
+                $data['currentProviderName'] = $provider['company_company_name'];
             }
         }
 

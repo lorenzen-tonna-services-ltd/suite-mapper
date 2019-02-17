@@ -20,6 +20,19 @@ class FileStorage implements Storage
         }
 
         file_put_contents($this->directory .'/'. $file, $json);
+
+        // Create or overwrite daily back up
+        $backupDir = date('dmY');
+
+        if (!is_dir($this->directory .'/'. $backupDir)) {
+            mkdir($this->directory .'/'. $backupDir);
+        }
+
+        if (is_file($this->directory .'/'. $backupDir .'/'. $file)) {
+            unlink($this->directory .'/'. $backupDir .'/'. $file);
+        }
+
+        file_put_contents($this->directory .'/'. $backupDir .'/'. $file, $json);
     }
 
     public function readJsonFromFile($file)

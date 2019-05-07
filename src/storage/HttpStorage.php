@@ -19,11 +19,18 @@ class HttpStorage implements Storage
     private $htPassword;
 
     /**
-     * @param $baseUrl string Base URL
+     * @var ConsoleLogger
      */
-    public function __construct($baseUrl)
+    private $logger;
+
+    /**
+     * @param $baseUrl string Base URL
+     * @param $logger ConsoleLogger
+     */
+    public function __construct($baseUrl, &$logger = null)
     {
         $this->baseUrl = $baseUrl;
+        $this->logger  = $logger;
     }
 
     /**
@@ -65,6 +72,8 @@ class HttpStorage implements Storage
     {
         $ch = curl_init();
 
+        $this->logInfo(sprintf('Catching JSON from %s', $this->baseUrl . $file));
+
         curl_setopt($ch, CURLOPT_URL, $this->baseUrl . $file);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -75,8 +84,22 @@ class HttpStorage implements Storage
 
         $json = trim(curl_exec($ch));
 
+        $error = curl_error($ch);
+        if ($error) {
+            $this->logInfo($error);
+        } else {
+            $this->logInfo('Result JSON: '. $json);
+        }
+
         curl_close($ch);
 
         return $json;
+    }
+
+    private function logInfo($message)
+    {
+        if ($this->logger) {
+            $this->logger->info($message);
+        }
     }
 }

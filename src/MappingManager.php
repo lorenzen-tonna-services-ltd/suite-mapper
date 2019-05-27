@@ -68,6 +68,11 @@ class MappingManager
      */
     private function getAvailableMappings($type)
     {
+        /** temporary fix */
+        if (empty($type)) {
+            $type = 'tariff-change';
+        }
+
         $fileName = $type .'.json';
 
         $data = $this->storage->readJsonFromFile($fileName);

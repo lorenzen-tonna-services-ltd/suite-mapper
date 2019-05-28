@@ -73,9 +73,13 @@ class QueryBuilder
             $this->mapping->getSourceTable(), HookRegistry::EXEC_TYPE_PRE, $data
         );
 
+        if (!isset($data[$this->mapping->getSourceIdentifier()])) {
+            return;
+        }
+
         $query  = 'SELECT COUNT(*) AS entries FROM ' . $this->mapping->getDestinationTable();
         $query .= ' WHERE `' . $this->mapping->getDestinationIdentifier() .'` =';
-        $query .= ' "'. $data[$this->mapping->getSourceIdentifier()] .'";';
+        $query .= ' "'. $data[$this->mapping->getSourceIdentifier()] .'";'; // ERROR
 
         $result = $this->pdo->query($query)->fetch(\PDO::FETCH_ASSOC);
         if ($result['entries'] >= 1) {

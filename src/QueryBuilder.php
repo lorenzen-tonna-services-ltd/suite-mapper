@@ -250,6 +250,8 @@ class QueryBuilder
                     } else {
                         $value = $mappingField->getData();
                     }
+                } else if ($mappingField->getFunction() == 'uuid') {
+                    $value = $this->generateUUID();
                 }
             } else {
                 if ($mappingField->getFunction() == 'ifnull' && empty($value)) {
@@ -263,6 +265,8 @@ class QueryBuilder
                     } else {
                         $value = $mappingField->getData();
                     }
+                } else if ($mappingField->getFunction() == 'uuid') {
+                    $value = $this->generateUUID();
                 }
             }
 

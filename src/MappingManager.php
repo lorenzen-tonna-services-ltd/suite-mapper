@@ -53,6 +53,11 @@ class MappingManager
      */
     public function getMappingsBySyncType($type)
     {
+        /** temporary fix */
+        if (empty($type)) {
+            $type = 'tariff-change';
+        }
+
         if (!isset($this->mappings[$type])) {
             $this->getAvailableMappings($type);
         }

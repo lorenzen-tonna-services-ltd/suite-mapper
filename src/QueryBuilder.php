@@ -179,7 +179,7 @@ class QueryBuilder
             }
             
             if ($value !== null) {
-                $query .= '"' . $value . '",';
+                $query .= "'" . $value . "',";
             }
         }
 
@@ -266,12 +266,13 @@ class QueryBuilder
                         $value = $mappingField->getData();
                     }
                 } else if ($mappingField->getFunction() == 'uuid') {
+                    $query .= '`' . $mappingField->getDestinationField() . '`,';
                     $value = $this->generateUUID();
                 }
             }
 
             if ($value !== null) {
-                $values .= '"'. $value . '",';
+                $values .= "'". $value . "',";
             }
         }
 

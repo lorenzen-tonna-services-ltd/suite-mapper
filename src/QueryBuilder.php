@@ -379,7 +379,12 @@ class QueryBuilder
                     $table = $relation->getTableRight();
                 }
 
-                $query = "SELECT id FROM ". $table ." WHERE ". $relation->getIdentifier(true) ." = '". $data['id'] ."'";
+                $idField = "id";
+                if (substr($table, -5) == '_cstm') {
+                    $idField = "id_c";
+                }
+
+                $query = "SELECT ". $idField ." FROM ". $table ." WHERE ". $relation->getIdentifier(true) ." = '". $data['id'] ."'";
 
                 /* fetch all related entities and create relationship for each */
                 $result = $this->pdo->query($query)->fetchAll(\PDO::FETCH_ASSOC);
